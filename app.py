@@ -29,6 +29,23 @@ FEATURE_LABELS = {
     "observed_negative_consequences": "Observed negative consequences for coworkers",
 }
 
+FEATURE_GROUPS = {
+    "Workplace setup": [
+        "self_employed",
+        "company_size",
+        "remote_work",
+        "tech_company",
+    ],
+    "Support and privacy": [
+        "mental_health_benefits",
+        "care_options",
+        "wellness_program",
+        "seek_help_resources",
+        "anonymity_protection",
+        "mental_health_leave_ease",
+    ],
+}
+
 st.set_page_config(
     page_title="Workplace Survey Explorer",
     page_icon="🧠",
@@ -88,6 +105,11 @@ st.markdown(
         background:rgba(20,27,52,.82); border:1px solid rgba(124,140,255,.28);
         border-radius:20px; padding:1.45rem 1.35rem 1.1rem;
         box-shadow:0 12px 34px rgba(0,0,0,.28);
+    }
+    .form-section {
+        color:#8be9fd !important; font-size:.79rem; font-weight:800; letter-spacing:.12em;
+        text-transform:uppercase; margin:1rem 0 .55rem; padding-bottom:.42rem;
+        border-bottom:1px solid rgba(124,140,255,.22);
     }
     label, label p, [data-testid="stWidgetLabel"] p {
         color:#e5e7eb !important; font-weight:600 !important; font-size:.87rem !important;
@@ -204,14 +226,6 @@ SAMPLE_PROFILE = {
     "seek_help_resources": "yes",
     "anonymity_protection": "yes",
     "mental_health_leave_ease": "somewhat_easy",
-    "mental_health_discussion_consequence": "no",
-    "physical_health_discussion_consequence": "no",
-    "coworker_discussion_comfort": "some_of_them",
-    "supervisor_discussion_comfort": "yes",
-    "mental_health_interview": "no",
-    "physical_health_interview": "maybe",
-    "mental_vs_physical_parity": "yes",
-    "observed_negative_consequences": "no",
 }
 
 
@@ -280,26 +294,33 @@ predict_tab, insights_tab, data_tab = st.tabs(
 with predict_tab:
     st.subheader("Educational survey-response demo")
     st.caption(
-        "Choose workplace-policy and workplace-attitude responses. The app excludes "
-        "age, gender, country, family history, and work-interference fields."
+        "Ten focused workplace-support inputs, arranged in two simple sections."
     )
 
     with st.form("survey_form"):
-        columns = st.columns(3)
         row = {}
-        for index, feature in enumerate(feature_names):
-            with columns[index % 3]:
-                choices = options[feature]
-                state_key = f"input_{feature}"
-                saved_value = st.session_state.get(state_key, defaults[feature])
-                default_index = choices.index(saved_value)
-                row[feature] = st.selectbox(
-                    FEATURE_LABELS.get(feature, feature.replace("_", " ").title()),
-                    choices,
-                    index=default_index,
-                    format_func=display_value,
-                    key=state_key,
-                )
+        for section_title, section_features in FEATURE_GROUPS.items():
+            active_features = [feature for feature in section_features if feature in feature_names]
+            if not active_features:
+                continue
+            st.markdown(
+                f'<div class="form-section">{section_title}</div>',
+                unsafe_allow_html=True,
+            )
+            columns = st.columns(2)
+            for index, feature in enumerate(active_features):
+                with columns[index % 2]:
+                    choices = options[feature]
+                    state_key = f"input_{feature}"
+                    saved_value = st.session_state.get(state_key, defaults[feature])
+                    default_index = choices.index(saved_value)
+                    row[feature] = st.selectbox(
+                        FEATURE_LABELS.get(feature, feature.replace("_", " ").title()),
+                        choices,
+                        index=default_index,
+                        format_func=display_value,
+                        key=state_key,
+                    )
 
         submitted = st.form_submit_button(
             "Analyse workplace survey pattern",
